@@ -10,7 +10,7 @@ const router = Router();
  * Fetches calendar events + recent emails, produces a summary.
  * MVP: uses a simple template-based summarizer (no LLM call).
  */
-router.post("/jobs/daily-brief", async (_req: Request, res: Response) => {
+router.post("/daily-brief", async (_req: Request, res: Response) => {
   try {
     const [events, emails] = await Promise.all([
       getTodayEvents().catch((err) => {
@@ -87,7 +87,7 @@ router.post("/jobs/daily-brief", async (_req: Request, res: Response) => {
  * Creates a Gmail draft reply to a specific message.
  * Body: { messageId, threadId, to, subject, body }
  */
-router.post("/jobs/draft-reply", async (req: Request, res: Response) => {
+router.post("/draft-reply", async (req: Request, res: Response) => {
   try {
     const { messageId, threadId, to, subject, body } = req.body;
 
