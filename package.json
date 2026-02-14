@@ -1,0 +1,19 @@
+{
+  "name": "easyclaw",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/control-plane",
+    "apps/tenant-runtime"
+  ],
+  "scripts": {
+    "dev:control-plane": "npm run dev --workspace=apps/control-plane",
+    "dev:runtime": "npm run dev --workspace=apps/tenant-runtime",
+    "build:control-plane": "npm run build --workspace=apps/control-plane",
+    "build:runtime": "npm run build --workspace=apps/tenant-runtime",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

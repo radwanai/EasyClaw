@@ -1,0 +1,4 @@
+aws_region                  = "us-east-1"
+project_name                = "clawdbot"
+use_default_vpc             = true
+control_plane_shared_secret = "CHANGE_ME_TO_A_RANDOM_SECRET"
