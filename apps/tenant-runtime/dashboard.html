@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClawdBot Control</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0c10;
+  --bg-card: #0f1218;
+  --bg-card-hover: #141a22;
+  --border: #1c2433;
+  --border-bright: #2a3545;
+  --text: #c8d0dc;
+  --text-dim: #5a6577;
+  --text-bright: #e8edf5;
+  --amber: #f0a030;
+  --amber-dim: #8a6020;
+  --green: #30d060;
+  --green-dim: #1a6830;
+  --red: #f04040;
+  --red-dim: #802020;
+  --blue: #4090f0;
+  --blue-dim: #204880;
+  --purple: #9060f0;
+  --cyan: #40d0d0;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-body: 'Outfit', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    transparent 0px, transparent 2px,
+    rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 28px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, #0d0f15 0%, var(--bg) 100%);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-left { display: flex; align-items: center; gap: 14px; }
+
+.logo {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-bright);
+  letter-spacing: -0.5px;
+}
+
+.logo span { color: var(--amber); }
+
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(48, 208, 96, 0.08);
+  border: 1px solid var(--green-dim);
+  color: var(--green);
+}
+
+.status-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.header-right {
+  display: flex; align-items: center; gap: 16px;
+  font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+}
+
+.grid > * { background: var(--bg-card); }
+
+.panel {
+  padding: 20px 24px;
+  min-height: 280px;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.2s;
+  animation: fadeUp 0.4s ease both;
+}
+
+.panel:hover { background: var(--bg-card-hover); }
+
+.panel:nth-child(1) { animation-delay: 0s; }
+.panel:nth-child(2) { animation-delay: .05s; }
+.panel:nth-child(3) { animation-delay: .1s; }
+.panel:nth-child(4) { animation-delay: .15s; }
+.panel:nth-child(5) { animation-delay: .2s; }
+.panel:nth-child(6) { animation-delay: .25s; }
+.panel:nth-child(7) { animation-delay: .3s; }
+.panel:nth-child(8) { animation-delay: .35s; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.panel.wide { grid-column: span 2; }
+.panel.full { grid-column: span 3; }
+
+.panel-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+}
+
+.panel-title {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-dim);
+}
+
+.panel-badge {
+  font-family: var(--font-mono); font-size: 10px;
+  padding: 2px 8px; border-radius: 3px;
+  background: rgba(240,160,48,0.1); border: 1px solid var(--amber-dim); color: var(--amber);
+}
+
+.stat-row { display: flex; gap: 24px; margin-bottom: 16px; }
+.stat { display: flex; flex-direction: column; }
+
+.stat-value {
+  font-family: var(--font-mono); font-size: 28px; font-weight: 700;
+  color: var(--text-bright); line-height: 1;
+}
+
+.stat-value.amber { color: var(--amber); }
+.stat-value.green { color: var(--green); }
+.stat-value.red { color: var(--red); }
+.stat-value.blue { color: var(--blue); }
+
+.stat-label {
+  font-family: var(--font-mono); font-size: 9px;
+  text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin-top: 4px;
+}
+
+.list-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid rgba(28,36,51,0.5); font-size: 13px;
+}
+.list-item:last-child { border-bottom: none; }
+
+.list-dot {
+  width: 5px; height: 5px; border-radius: 50%; margin-top: 7px; flex-shrink: 0;
+}
+.list-dot.amber { background: var(--amber); }
+.list-dot.green { background: var(--green); }
+.list-dot.red { background: var(--red); }
+.list-dot.blue { background: var(--blue); }
+.list-dot.purple { background: var(--purple); }
+.list-dot.dim { background: var(--text-dim); }
+
+.list-content { flex: 1; min-width: 0; }
+.list-primary { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.list-secondary { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+.list-right { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); white-space: nowrap; flex-shrink: 0; }
+
+.usage-chart { display: flex; align-items: flex-end; gap: 2px; height: 80px; margin: 12px 0; }
+.usage-bar { flex: 1; min-width: 0; border-radius: 2px 2px 0 0; transition: height 0.3s ease; }
+.usage-bar.input { background: var(--blue); }
+.usage-bar.output { background: var(--amber); }
+
+.mem-cats { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.mem-cat { font-family: var(--font-mono); font-size: 10px; padding: 3px 8px; border-radius: 3px; border: 1px solid var(--border); color: var(--text-dim); }
+.mem-cat .count { color: var(--text-bright); font-weight: 600; }
+
+.priority { font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; padding: 1px 6px; border-radius: 2px; }
+.priority.high { background: rgba(240,64,64,0.12); color: var(--red); border: 1px solid var(--red-dim); }
+.priority.medium { background: rgba(240,160,48,0.12); color: var(--amber); border: 1px solid var(--amber-dim); }
+.priority.low { background: rgba(64,144,240,0.12); color: var(--blue); border: 1px solid var(--blue-dim); }
+
+.tweet { padding: 10px 0; border-bottom: 1px solid rgba(28,36,51,0.5); }
+.tweet:last-child { border-bottom: none; }
+.tweet-header { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.tweet-author { font-weight: 500; font-size: 12px; color: var(--text-bright); }
+.tweet-handle { font-family: var(--font-mono); font-size: 10px; color: var(--cyan); }
+.tweet-text { font-size: 12px; color: var(--text); margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tweet-metrics { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); display: flex; gap: 12px; }
+
+.cost-display { font-family: var(--font-mono); }
+.dollar { font-size: 20px; color: var(--text-dim); }
+
+.cal-event { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid rgba(28,36,51,0.5); }
+.cal-event:last-child { border-bottom: none; }
+.cal-date { font-family: var(--font-mono); font-size: 10px; color: var(--purple); min-width: 50px; text-align: right; padding-top: 2px; }
+.cal-info { flex: 1; }
+.cal-title { font-size: 13px; color: var(--text); }
+.cal-meta { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+
+.empty-state {
+  display: flex; align-items: center; justify-content: center; height: 120px;
+  font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); opacity: 0.6;
+}
+
+.scroll-area { max-height: 240px; overflow-y: auto; }
+.scroll-area::-webkit-scrollbar { width: 4px; }
+.scroll-area::-webkit-scrollbar-track { background: transparent; }
+.scroll-area::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+
+@media (max-width: 1100px) {
+  .grid { grid-template-columns: repeat(2, 1fr); }
+  .panel.wide { grid-column: span 2; }
+  .panel.full { grid-column: span 2; }
+}
+@media (max-width: 700px) {
+  .grid { grid-template-columns: 1fr; }
+  .panel.wide, .panel.full { grid-column: span 1; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="logo">CLAWD<span>BOT</span></div>
+    <div class="status-pill" id="statusPill">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">CONNECTING</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <span id="modelTag"></span>
+    <span id="refreshTag"></span>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="panel" id="panelUsage">
+    <div class="panel-header">
+      <div class="panel-title">API Usage</div>
+      <div class="panel-badge" id="usagePeriod">today</div>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="stat-value amber" id="totalCost"></div><div class="stat-label">Est. Cost</div></div>
+      <div class="stat"><div class="stat-value blue" id="totalCalls"></div><div class="stat-label">API Calls</div></div>
+      <div class="stat"><div class="stat-value" id="totalTokens"></div><div class="stat-label">Total Tokens</div></div>
+    </div>
+    <div class="usage-chart" id="usageChart"></div>
+    <div id="usageLegend" style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:9px;color:var(--text-dim)"></div>
+  </div>
+
+  <div class="panel" id="panelMemory">
+    <div class="panel-header">
+      <div class="panel-title">Harvey's Memory</div>
+      <div class="panel-badge" id="memTotal">0</div>
+    </div>
+    <div class="mem-cats" id="memCats"></div>
+    <div class="scroll-area" id="memList"></div>
+  </div>
+
+  <div class="panel" id="panelTasks">
+    <div class="panel-header">
+      <div class="panel-title">Tasks</div>
+      <div class="panel-badge" id="taskCount">0</div>
+    </div>
+    <div class="scroll-area" id="taskList"></div>
+  </div>
+
+  <div class="panel wide" id="panelTwitter">
+    <div class="panel-header">
+      <div class="panel-title">X / Twitter Feed</div>
+      <div class="panel-badge" id="twitterAge"></div>
+    </div>
+    <div class="scroll-area" id="twitterList" style="max-height:280px"></div>
+  </div>
+
+  <div class="panel" id="panelCalendar">
+    <div class="panel-header">
+      <div class="panel-title">Calendar</div>
+      <div class="panel-badge" id="calCount">0</div>
+    </div>
+    <div class="scroll-area" id="calList"></div>
+  </div>
+
+  <div class="panel wide" id="panelEmails">
+    <div class="panel-header">
+      <div class="panel-title">Emails</div>
+      <div class="panel-badge" id="emailCount">0</div>
+    </div>
+    <div class="stat-row" style="margin-bottom:10px">
+      <div class="stat"><div class="stat-value red" id="unreadCount"></div><div class="stat-label">Unread</div></div>
+      <div class="stat"><div class="stat-value green" id="readCount"></div><div class="stat-label">Read</div></div>
+    </div>
+    <div class="scroll-area" id="emailList" style="max-height:180px"></div>
+  </div>
+
+  <div class="panel" id="panelAuth">
+    <div class="panel-header">
+      <div class="panel-title">Authorized</div>
+    </div>
+    <div id="authList"></div>
+  </div>
+</div>
+
+<script>
+const API_URL = '/api/data';
+const REFRESH_MS = 30000;
+const SONNET_INPUT = 3.0;
+const SONNET_OUTPUT = 15.0;
+
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function el(tag, attrs, children) {
+  const e = document.createElement(tag);
+  if (attrs) for (const [k,v] of Object.entries(attrs)) {
+    if (k === 'style' && typeof v === 'object') Object.assign(e.style, v);
+    else if (k === 'className') e.className = v;
+    else e.setAttribute(k, v);
+  }
+  if (typeof children === 'string') e.textContent = children;
+  else if (Array.isArray(children)) children.forEach(c => { if (c) e.appendChild(c); });
+  else if (children instanceof Node) e.appendChild(children);
+  return e;
+}
+
+function ago(ts) {
+  if (!ts) return '';
+  const m = Math.floor((Date.now() - new Date(ts).getTime()) / 60000);
+  if (m < 1) return 'now';
+  if (m < 60) return m + 'm';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + 'h';
+  return Math.floor(h / 24) + 'd';
+}
+
+function shortDate(ts) {
+  if (!ts) return '';
+  return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function shortTime(ts) {
+  if (!ts) return '';
+  return new Date(ts).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
+function fmt(n) {
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return String(n);
+}
+
+function clearEl(id) { document.getElementById(id).replaceChildren(); }
+function getEl(id) { return document.getElementById(id); }
+
+function setStatus(online) {
+  getEl('statusText').textContent = online ? 'ONLINE' : 'OFFLINE';
+  const pill = getEl('statusPill');
+  const dot = getEl('statusDot');
+  pill.style.borderColor = online ? 'var(--green-dim)' : 'var(--red-dim)';
+  pill.style.color = online ? 'var(--green)' : 'var(--red)';
+  pill.style.background = online ? 'rgba(48,208,96,0.08)' : 'rgba(240,64,64,0.08)';
+  dot.style.background = online ? 'var(--green)' : 'var(--red)';
+}
+
+function makeListItem(dotColor, primary, secondary, right) {
+  return el('div', {className: 'list-item'}, [
+    el('div', {className: 'list-dot ' + dotColor}),
+    el('div', {className: 'list-content'}, [
+      el('div', {className: 'list-primary'}, primary),
+      secondary ? el('div', {className: 'list-secondary'}, secondary) : null,
+    ]),
+    right ? (typeof right === 'string' ? el('div', {className: 'list-right'}, right) : right) : null,
+  ]);
+}
+
+// ─── Renderers ───
+
+function renderUsage(usage) {
+  const chart = getEl('usageChart');
+  const legend = getEl('usageLegend');
+
+  if (!usage || !Array.isArray(usage) || usage.length === 0) {
+    getEl('totalCost').textContent = '$0.00';
+    getEl('totalCalls').textContent = '0';
+    getEl('totalTokens').textContent = '0';
+    chart.replaceChildren(el('div', {className: 'empty-state'}, 'no usage data yet'));
+    legend.replaceChildren();
+    return;
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  const todayE = usage.filter(e => e.ts && e.ts.startsWith(today));
+  const entries = todayE.length > 0 ? todayE : usage.slice(-50);
+  getEl('usagePeriod').textContent = todayE.length > 0 ? 'today' : 'all time';
+
+  let totIn = 0, totOut = 0;
+  for (const e of entries) { totIn += e.input_tokens || 0; totOut += e.output_tokens || 0; }
+
+  const cost = (totIn / 1e6) * SONNET_INPUT + (totOut / 1e6) * SONNET_OUTPUT;
+  getEl('totalCost').textContent = '$' + cost.toFixed(4);
+  getEl('totalCalls').textContent = String(entries.length);
+  getEl('totalTokens').textContent = fmt(totIn + totOut);
+
+  // Bar chart
+  const last = entries.slice(-30);
+  const maxT = Math.max(...last.map(e => (e.input_tokens || 0) + (e.output_tokens || 0)), 1);
+  chart.replaceChildren();
+  for (const e of last) {
+    const inp = e.input_tokens || 0;
+    const out = e.output_tokens || 0;
+    const total = inp + out;
+    const pct = (total / maxT) * 100;
+    const inpPct = total > 0 ? (inp / total) * pct : 0;
+
+    const col = el('div', {style: {flex:'1',display:'flex',flexDirection:'column',justifyContent:'flex-end',gap:'1px',height:'100%'}});
+    col.title = (e.agent || '?') + ': ' + fmt(inp) + ' in / ' + fmt(out) + ' out';
+    col.appendChild(el('div', {className: 'usage-bar output', style: {height: (pct - inpPct) + '%'}}));
+    col.appendChild(el('div', {className: 'usage-bar input', style: {height: inpPct + '%'}}));
+    chart.appendChild(col);
+  }
+
+  legend.replaceChildren();
+  const lblIn = el('span'); lblIn.innerHTML = '<span style="color:var(--blue)">&#9632;</span> input';
+  const lblOut = el('span'); lblOut.innerHTML = '<span style="color:var(--amber)">&#9632;</span> output';
+  legend.appendChild(lblIn);
+  legend.appendChild(lblOut);
+}
+
+function renderMemory(memories) {
+  const cats = getEl('memCats');
+  const list = getEl('memList');
+  const total = getEl('memTotal');
+  const catColors = { personal: 'amber', preferences: 'blue', projects: 'green', facts: 'purple', general: 'dim' };
+
+  if (!memories || typeof memories !== 'object') {
+    total.textContent = '0'; cats.replaceChildren();
+    list.replaceChildren(el('div', {className: 'empty-state'}, 'no memories yet'));
+    return;
+  }
+
+  let count = 0;
+  cats.replaceChildren();
+  for (const [cat, items] of Object.entries(memories)) {
+    if (cat.startsWith('_') || !Array.isArray(items)) continue;
+    count += items.length;
+    const tag = el('div', {className: 'mem-cat'});
+    tag.textContent = cat + ' ';
+    tag.appendChild(el('span', {className: 'count'}, String(items.length)));
+    cats.appendChild(tag);
+  }
+  total.textContent = String(count);
+
+  const all = [];
+  for (const [cat, items] of Object.entries(memories)) {
+    if (cat.startsWith('_') || !Array.isArray(items)) continue;
+    for (const item of items) all.push({ ...item, category: cat });
+  }
+  all.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+  list.replaceChildren();
+  if (all.length === 0) { list.appendChild(el('div', {className: 'empty-state'}, 'no memories yet')); return; }
+
+  for (const m of all.slice(0, 12)) {
+    const color = catColors[m.category] || 'dim';
+    let sec = m.category;
+    if (m.tags && m.tags.length) sec += ' / ' + m.tags.join(', ');
+    const right = el('div', {className: 'list-right'}, ago(m.timestamp));
+    if (m.followUp && m.followUp.status === 'pending') {
+      const badge = el('span', {style: {color: 'var(--amber)', fontSize: '9px', fontFamily: 'var(--font-mono)'}}, ' [follow-up]');
+      const primary = el('div', {className: 'list-primary'});
+      primary.textContent = m.text;
+      primary.appendChild(badge);
+      list.appendChild(el('div', {className: 'list-item'}, [
+        el('div', {className: 'list-dot ' + color}),
+        el('div', {className: 'list-content'}, [primary, el('div', {className: 'list-secondary'}, sec)]),
+        right,
+      ]));
+    } else {
+      list.appendChild(makeListItem(color, m.text, sec, ago(m.timestamp)));
+    }
+  }
+}
+
+function renderTasks(tasks) {
+  const list = getEl('taskList');
+  const count = getEl('taskCount');
+
+  if (!tasks || !Array.isArray(tasks)) {
+    count.textContent = '0';
+    list.replaceChildren(el('div', {className: 'empty-state'}, 'no tasks'));
+    return;
+  }
+
+  count.textContent = String(tasks.length);
+  const sorted = [...tasks].sort((a,b) => {
+    const p = {high:0,medium:1,low:2};
+    return (p[a.priority]||3) - (p[b.priority]||3);
+  });
+
+  list.replaceChildren();
+  for (const t of sorted) {
+    const statusColor = t.status === 'done' ? 'green' : (t.priority === 'high' ? 'red' : 'amber');
+    const sec = (t.source || '') + (t.due ? ' / due ' + shortDate(t.due) : '');
+    const badge = el('span', {className: 'priority ' + (t.priority || 'low')}, t.priority || 'low');
+    const rightEl = el('div', {className: 'list-right'});
+    rightEl.appendChild(badge);
+    list.appendChild(el('div', {className: 'list-item'}, [
+      el('div', {className: 'list-dot ' + statusColor}),
+      el('div', {className: 'list-content'}, [
+        el('div', {className: 'list-primary'}, t.title || t.description || ''),
+        el('div', {className: 'list-secondary'}, sec),
+      ]),
+      rightEl,
+    ]));
+  }
+}
+
+function renderTwitter(twitter) {
+  const list = getEl('twitterList');
+  const age = getEl('twitterAge');
+
+  if (!twitter || (!twitter.trending && !twitter.watched)) {
+    age.textContent = '';
+    list.replaceChildren(el('div', {className: 'empty-state'}, 'no X data'));
+    return;
+  }
+
+  age.textContent = twitter.lastUpdate ? ago(twitter.lastUpdate) : '';
+  const allT = [...(twitter.trending || []), ...(twitter.watched || [])];
+  allT.sort((a,b) => ((b.likes||0)+(b.retweets||0)) - ((a.likes||0)+(a.retweets||0)));
+
+  list.replaceChildren();
+  for (const t of allT.slice(0, 10)) {
+    const tweet = el('div', {className: 'tweet'}, [
+      el('div', {className: 'tweet-header'}, [
+        el('span', {className: 'tweet-author'}, t.author || ''),
+        el('span', {className: 'tweet-handle'}, '@' + (t.username || '')),
+      ]),
+      el('div', {className: 'tweet-text'}, (t.text || '').slice(0, 200)),
+      el('div', {className: 'tweet-metrics'}, [
+        el('span', null, fmt(t.likes || 0) + ' likes'),
+        el('span', null, fmt(t.retweets || 0) + ' RTs'),
+        el('span', null, fmt(t.replies || 0) + ' replies'),
+      ]),
+    ]);
+    list.appendChild(tweet);
+  }
+}
+
+function renderCalendar(calendar) {
+  const list = getEl('calList');
+  const count = getEl('calCount');
+
+  if (!calendar || !calendar.events || !Array.isArray(calendar.events)) {
+    count.textContent = '0';
+    list.replaceChildren(el('div', {className: 'empty-state'}, 'no calendar data'));
+    return;
+  }
+
+  const now = new Date();
+  const upcoming = calendar.events
+    .filter(e => new Date(e.start) >= now && !e.isCancelled)
+    .sort((a,b) => new Date(a.start) - new Date(b.start))
+    .slice(0, 8);
+
+  count.textContent = String(upcoming.length);
+  list.replaceChildren();
+
+  if (upcoming.length === 0) { list.appendChild(el('div', {className: 'empty-state'}, 'no upcoming events')); return; }
+
+  for (const e of upcoming) {
+    const dateEl = el('div', {className: 'cal-date'});
+    dateEl.appendChild(el('div', null, shortDate(e.start)));
+    dateEl.appendChild(el('div', null, shortTime(e.start)));
+    const meta = (e.organizer || '') + (e.location ? ' / ' + e.location : '');
+    list.appendChild(el('div', {className: 'cal-event'}, [
+      dateEl,
+      el('div', {className: 'cal-info'}, [
+        el('div', {className: 'cal-title'}, e.subject || ''),
+        el('div', {className: 'cal-meta'}, meta),
+      ]),
+    ]));
+  }
+}
+
+function renderEmails(emails) {
+  const list = getEl('emailList');
+  const count = getEl('emailCount');
+
+  if (!emails || !emails.emails || !Array.isArray(emails.emails)) {
+    count.textContent = '0'; getEl('unreadCount').textContent = '0'; getEl('readCount').textContent = '0';
+    list.replaceChildren(el('div', {className: 'empty-state'}, 'no email data'));
+    return;
+  }
+
+  const items = emails.emails;
+  count.textContent = String(items.length);
+  const unreadN = items.filter(e => !e.isRead).length;
+  getEl('unreadCount').textContent = String(unreadN);
+  getEl('readCount').textContent = String(items.length - unreadN);
+
+  list.replaceChildren();
+  for (const e of items.slice(0, 10)) {
+    const color = e.isRead ? 'dim' : (e.importance === 'high' ? 'red' : 'blue');
+    const primary = el('div', {className: 'list-primary'}, e.subject || '');
+    if (!e.isRead) { primary.style.color = 'var(--text-bright)'; primary.style.fontWeight = '500'; }
+    list.appendChild(el('div', {className: 'list-item'}, [
+      el('div', {className: 'list-dot ' + color}),
+      el('div', {className: 'list-content'}, [
+        primary,
+        el('div', {className: 'list-secondary'}, e.sender || e.sender_email || ''),
+      ]),
+      el('div', {className: 'list-right'}, ago(e.date)),
+    ]));
+  }
+}
+
+function renderAuth(authorized) {
+  const list = getEl('authList');
+  if (!authorized || typeof authorized !== 'object') {
+    list.replaceChildren(el('div', {className: 'empty-state'}, 'no auth data'));
+    return;
+  }
+
+  list.replaceChildren();
+  for (const [id, info] of Object.entries(authorized)) {
+    list.appendChild(makeListItem('green', info.name || 'Unknown', 'ID: ' + id, shortDate(info.date)));
+  }
+}
+
+// ─── Main loop ───
+
+async function refresh() {
+  try {
+    const res = await fetch(API_URL);
+    if (!res.ok) throw new Error('API error');
+    const data = await res.json();
+
+    setStatus(true);
+    getEl('modelTag').textContent = 'claude-sonnet-4.5';
+    getEl('refreshTag').textContent = 'updated ' + new Date().toLocaleTimeString();
+
+    renderUsage(data.usage);
+    renderMemory(data.memories);
+    renderTasks(data.tasks);
+    renderTwitter(data.twitter);
+    renderCalendar(data.calendar);
+    renderEmails(data.emails);
+    renderAuth(data.authorized);
+  } catch (err) {
+    setStatus(false);
+  }
+}
+
+refresh();
+setInterval(refresh, REFRESH_MS);
+</script>
+</body>
+</html>

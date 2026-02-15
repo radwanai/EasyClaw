@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs cat:*)",
+      "Bash(node:*)",
+      "Bash(/usr/local/bin/node:*)",
+      "Bash(/opt/homebrew/bin/node:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker exec:*)",
+      "WebFetch(domain:openclaw.ai)",
+      "Bash(curl:*)",
+      "Bash(brew list:*)",
+      "Bash(grep:*)",
+      "WebFetch(domain:skills.sh)",
+      "Bash(gh auth status:*)",
+      "Bash(git --version:*)",
+      "Bash(brew install:*)",
+      "Bash(unzip:*)",
+      "Bash(export PATH=\"/tmp/gh/gh_2.86.0_macOS_arm64/bin:$PATH\")",
+      "Bash(gh:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nInitial commit — ClawdBot multi-agent system\n\nHarvey & Laura Telegram bots with:\n- Claude-powered conversations with tool use\n- Phone calls via Twilio + ElevenLabs \\(STT/TTS\\)\n- Self-coding skills system \\(Harvey creates his own plugins\\)\n- Proactive outreach \\(Harvey Life personality engine\\)\n- Memory system with follow-ups\n- Twitter/X integration\n- Voice notes in Egyptian Arabic\n- Dashboard + Docker deployment\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C /Users/samehradwan/clawdbot status --short)",
+      "Bash(git -C /Users/samehradwan/clawdbot add .claude/settings.local.json)",
+      "Bash(git -C /Users/samehradwan/clawdbot commit -m \"$\\(cat <<''EOF''\nUpdate Claude Code local settings\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C /Users/samehradwan/clawdbot push)"
+    ]
+  }
+}

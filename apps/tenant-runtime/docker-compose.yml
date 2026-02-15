@@ -1,0 +1,17 @@
+services:
+  clawdbot:
+    build: .
+    container_name: clawdbot
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - NODE_OPTIONS=--max-old-space-size=256
+    ports:
+      - "3456:3456"
+    volumes:
+      - ./data:/app/data
+      - ./skills:/app/skills
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
